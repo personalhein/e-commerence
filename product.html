@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="my">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — MyShop.mm</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="topbar"><i class="bi bi-truck"></i>Free delivery in Yangon over 50,000 Ks</div>
+  <header>
+    <div class="navbar">
+      <div class="nav-left">
+        <button class="icon-btn hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list"></i></button>
+        <a class="logo" href="index.html"><i class="bi bi-bag-heart-fill logo-icon"></i>MyShop<span>.mm</span></a>
+      </div>
+      <nav class="links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="shop.html" class="active">Shop</a>
+        <a href="cart.html">Cart</a>
+        <a href="checkout.html">Checkout</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-btn search-toggle" onclick="toggleSearch()" aria-label="Search"><i
+            class="bi bi-search"></i></button>
+        <button class="cart-btn" onclick="openDrawer()" aria-label="Cart"><i class="bi bi-cart3"></i><span
+            class="cart-count">0</span></button>
+      </div>
+    </div>
+    <div class="mobile-search" id="mobileSearch">
+      <div class="mobile-search-inner">
+        <i class="bi bi-search"></i>
+        <input placeholder="Search products... (e.g. coffee, watch)">
+        <button onclick="mobileSearchGo()">Search</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section container">
+    <a class="back-link" href="shop.html"><i class="bi bi-arrow-left"></i>Back to Shop</a>
+    <div id="detail" style="margin-top:16px"></div>
+    <h2 class="section-title" style="margin-top:50px"><i class="bi bi-link-45deg"></i> Related Products</h2>
+    <div class="grid" id="related"></div>
+  </section>
+
+  <footer>
+    <div class="copy">© 2026 MyShop.mm — Interview Portfolio Project</div>
+  </footer>
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3><i class="bi bi-cart3"></i>Your Cart</h3><button class="drawer-close" onclick="closeDrawer()"
+        aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="drawer-items" id="drawerItems"></div>
+    <div class="drawer-foot">
+      <div class="total-row"><span>Total</span><span id="drawerTotal">0 Ks</span></div>
+      <a class="btn" style="width:100%" href="cart.html">View Cart & Checkout<i class="bi bi-arrow-right"></i></a>
+    </div>
+  </aside>
+  <div id="toast"></div>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const id = parseInt(new URLSearchParams(location.search).get("id")) || 1;
+    const p = PRODUCTS.find(x => x.id === id) || PRODUCTS[0];
+    document.title = p.name + " — MyShop.mm";
+    document.getElementById("detail").innerHTML = `
+<div class="detail">
+  <div style="position:relative"><img src="${p.img}" alt="${p.name}">${p.badge ? `<span class="badge ${p.badge}" style="top:14px;left:14px">${p.badge}</span>` : ""}</div>
+  <div>
+    <div class="card-cat">${p.category}</div>
+    <h1 style="font-size:26px;margin:6px 0">${p.name}</h1>
+    <p style="color:#666">${p.name_mm || ""}</p>
+    ${stars(p.rating)} <small style="color:#999">${p.rating} (${p.reviews} reviews)</small>
+    <div class="price-row" style="margin:14px 0"><span class="price" style="font-size:28px">${formatMMK(p.price)}</span>
+    ${p.oldPrice ? `<span class="old">${formatMMK(p.oldPrice)}</span><span style="background:#fee;color:#c00;font-size:12px;font-weight:800;padding:3px 10px;border-radius:12px">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : ""}</div>
+    <p style="color:#444">${p.desc}</p>
+    <div style="display:flex;gap:10px;margin:18px 0;align-items:center;flex-wrap:wrap">
+      <div class="qty"><button onclick="dq(-1)" aria-label="Decrease"><i class="bi bi-dash"></i></button><b id="dqv">1</b><button onclick="dq(1)" aria-label="Increase"><i class="bi bi-plus"></i></button></div>
+      <button class="btn" onclick="addToCart(${p.id},parseInt(document.getElementById('dqv').textContent))"><i class="bi bi-cart-plus"></i>Add to Cart</button>
+    </div>
+    <a class="btn btn-outline" href="checkout.html" onclick="addToCartSilent(${p.id})"><i class="bi bi-lightning-charge-fill"></i>Buy Now</a>
+    <ul class="perk-list">
+      <li><i class="bi bi-check-circle-fill"></i>In stock — ships within 24h</li>
+      <li><i class="bi bi-cash-coin"></i>Cash on Delivery available</li>
+      <li><i class="bi bi-arrow-counterclockwise"></i>7-day return policy</li>
+    </ul>
+  </div>
+</div>`;
+    function dq(d) { const e = document.getElementById("dqv"); e.textContent = Math.max(1, parseInt(e.textContent) + d); }
+    function addToCartSilent(pid) { const f = cart.find(i => i.id === pid); if (f) f.qty += 1; else cart.push({ id: pid, qty: 1 }); saveCart(); }
+    document.getElementById("related").innerHTML =
+      PRODUCTS.filter(x => x.category === p.category && x.id !== p.id).concat(PRODUCTS.filter(x => x.category !== p.category)).slice(0, 4).map(productCard).join("");
+  </script>
+</body>
+
+</html>

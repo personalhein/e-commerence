@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="my">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — MyShop.mm</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="topbar"><i class="bi bi-lock-fill"></i>Secure Checkout — KBZPay / WavePay / COD</div>
+  <header>
+    <div class="navbar">
+      <div class="nav-left">
+        <button class="icon-btn hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list"></i></button>
+        <a class="logo" href="index.html"><i class="bi bi-bag-heart-fill logo-icon"></i>MyShop<span>.mm</span></a>
+      </div>
+      <nav class="links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="cart.html">Cart</a>
+        <a href="checkout.html" class="active">Checkout</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-btn search-toggle" onclick="toggleSearch()" aria-label="Search"><i
+            class="bi bi-search"></i></button>
+        <button class="cart-btn" onclick="openDrawer()" aria-label="Cart"><i class="bi bi-cart3"></i><span
+            class="cart-count">0</span></button>
+      </div>
+    </div>
+    <div class="mobile-search" id="mobileSearch">
+      <div class="mobile-search-inner">
+        <i class="bi bi-search"></i>
+        <input placeholder="Search products... (e.g. coffee, watch)">
+        <button onclick="mobileSearchGo()">Search</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="section container" id="checkoutWrap">
+    <h2 class="section-title"><i class="bi bi-credit-card-fill"></i> Checkout</h2>
+    <p class="section-sub">ငွေချေမှု — Cash on Delivery ရပါပြီ</p>
+    <div class="form-card">
+      <div id="sumBox"></div>
+      <form id="orderForm" onsubmit="placeOrder(event)">
+        <label><i class="bi bi-person"></i> Full Name / အမည် *</label><input required id="fName"
+          placeholder="e.g. Aung Min">
+        <label><i class="bi bi-telephone"></i> Phone / ဖုန်း *</label><input required id="fPhone"
+          placeholder="09-xxxxxxxxx" pattern="09[0-9\- ]{7,12}">
+        <label><i class="bi bi-geo-alt"></i> Address / လိပ်စာ *</label><textarea required id="fAddr" rows="2"
+          placeholder="No, Street, Township, City"></textarea>
+        <label><i class="bi bi-building"></i> City</label>
+        <select id="fCity">
+          <option>Yangon</option>
+          <option>Mandalay</option>
+          <option>Naypyitaw</option>
+          <option>Other</option>
+        </select>
+        <label><i class="bi bi-wallet2"></i> Payment Method / ငွေပေးချေမှုနည်းလမ်း</label>
+        <select id="fPay">
+          <option>Cash on Delivery (COD)</option>
+          <option>KBZPay</option>
+          <option>WavePay</option>
+          <option>CBPay</option>
+        </select>
+        <label><i class="bi bi-chat-left-text"></i> Note (optional)</label><input id="fNote"
+          placeholder="e.g. Call before delivery">
+        <button class="btn" style="width:100%;margin-top:20px;font-size:17px" type="submit">Place Order<i
+            class="bi bi-arrow-right"></i><span id="payTotal"></span></button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section container" id="doneWrap" style="display:none">
+    <div class="form-card success">
+      <div class="tick"><i class="bi bi-check-circle-fill"></i></div>
+      <h2>ကျေးဇူးတင်ပါတယ်!</h2>
+      <p>Order placed successfully. Order ID: <b id="orderId"></b></p>
+      <p style="color:#666">ကျွန်တော်တို့ ဖုန်းဆက်အတည်ပြုပေးပါမယ်။</p>
+      <br><a class="btn" href="shop.html"><i class="bi bi-bag-fill"></i>Continue Shopping</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="copy">© 2026 MyShop.mm</div>
+  </footer>
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3><i class="bi bi-cart3"></i>Your Cart</h3><button class="drawer-close" onclick="closeDrawer()"
+        aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="drawer-items" id="drawerItems"></div>
+    <div class="drawer-foot">
+      <div class="total-row"><span>Total</span><span id="drawerTotal">0 Ks</span></div>
+      <a class="btn" style="width:100%" href="cart.html">View Cart<i class="bi bi-arrow-right"></i></a>
+    </div>
+  </aside>
+  <div id="toast"></div>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let cart = JSON.parse(localStorage.getItem("myshop_cart") || "[]");
+    function totals() {
+      const sub = cart.reduce((s, i) => { const p = PRODUCTS.find(p => p.id === i.id); return s + (p ? p.price * i.qty : 0); }, 0);
+      const ship = sub >= 50000 || sub === 0 ? 0 : 3000;
+      return { sub, ship, grand: sub + ship };
+    }
+    function renderSum() {
+      const t = totals();
+      if (!cart.length) {
+        document.getElementById("sumBox").innerHTML = `<p style="text-align:center;color:#888"><i class="bi bi-cart-x" style="font-size:36px"></i><br>Cart empty — <a href="shop.html" style="color:var(--primary);font-weight:700">go shopping</a></p>`;
+        document.querySelector("#orderForm button").disabled = true;
+        return;
+      }
+      document.getElementById("sumBox").innerHTML = `<h3><i class="bi bi-receipt"></i> Order Summary (${cart.reduce((s, i) => s + i.qty, 0)} items)</h3>
+    <div class="order-summary">${cart.map(i => { const p = PRODUCTS.find(p => p.id === i.id); return `<div style="display:flex;justify-content:space-between;font-size:14px;margin:4px 0"><span>${p.name} × ${i.qty}</span><b>${formatMMK(p.price * i.qty)}</b></div>`; }).join("")}
+    <hr style="margin:8px 0;border:none;border-top:1px solid #ddd">
+    <div style="display:flex;justify-content:space-between"><span>Delivery</span><b>${t.ship === 0 ? "FREE" : formatMMK(t.ship)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:18px;margin-top:6px"><span><b>Total</b></span><b style="color:var(--primary)">${formatMMK(t.grand)}</b></div></div>`;
+      document.getElementById("payTotal").textContent = formatMMK(t.grand);
+    }
+    function placeOrder(e) {
+      e.preventDefault();
+      const t = totals();
+      const oid = "MS-" + Date.now().toString().slice(-6);
+      const orders = JSON.parse(localStorage.getItem("myshop_orders") || "[]");
+      orders.push({ id: oid, name: document.getElementById("fName").value, phone: document.getElementById("fPhone").value, total: t.grand, date: new Date().toISOString(), items: cart });
+      localStorage.setItem("myshop_orders", JSON.stringify(orders));
+      localStorage.setItem("myshop_cart", "[]");
+      document.getElementById("orderId").textContent = oid;
+      document.getElementById("checkoutWrap").style.display = "none";
+      document.getElementById("doneWrap").style.display = "block";
+      window.scrollTo(0, 0);
+    }
+    renderSum();
+  </script>
+</body>
+
+</html>
